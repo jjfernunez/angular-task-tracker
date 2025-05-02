@@ -1,0 +1,190 @@
+<!-- dashboard.component.html -->
+<!-- Integrantes -->
+<div class="d-flex align-items-end gap-3 mb-4 overflow-auto">
+  <ng-container *ngFor="let member of team.members">
+    <div class="d-flex flex-column align-items-center text-center mx-2">
+      <div
+        class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mb-1"
+        style="width:48px; height:48px;"
+      >
+        {{ member.name.charAt(0) }}
+      </div>
+      <small>{{ member.name }}</small>
+    </div>
+  </ng-container>
+  <div class="d-flex flex-column align-items-center text-center">
+    <button
+      class="btn btn-outline-secondary btn-sm rounded-circle mb-1"
+      style="width:48px; height:48px"
+      (click)="addMember()"
+    >+</button>
+    <input
+      class="form-control form-control-sm"
+      style="width:80px"
+      [(ngModel)]="newMember"
+      (keyup.enter)="addMember()"
+      placeholder="Nombre"
+    />
+  </div>
+</div>
+
+<!-- Kanban con CDK drag-drop -->
+<div class="row g-3">
+  <!-- In Progress -->
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-header bg-warning-subtle text-dark">In Progress</div>
+      <div
+        class="card-body"
+        style="max-height:60vh; overflow:auto;"
+        cdkDropList
+        #inProgressList="cdkDropList"
+        [cdkDropListData]="inProgress"
+        [cdkDropListConnectedTo]="[testingList, completedList]"
+        (cdkDropListDropped)="drop($event,'in progress')"
+      >
+        <div
+          *ngFor="let task of inProgress; let i = index"
+          class="card mb-2 task-card"
+          cdkDrag
+        >
+          <div class="card-body p-2 d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="mb-1">{{ task.desc }}</h6>
+              <small>Días: {{ task.days }} | {{ task.assigned }}</small>
+            </div>
+            <div class="btn-group btn-group-sm">
+              <button
+                class="btn btn-outline-primary"
+                (click)="openPopup('in progress', task)"
+              >✎</button>
+              <button
+                class="btn btn-outline-danger"
+                (click)="deleteTask(task.assigned, task.desc)"
+              >✕</button>
+            </div>
+          </div>
+        </div>
+        <button
+          class="btn btn-sm btn-outline-secondary w-100 mt-2"
+          (click)="openPopup('in progress')"
+        ><i class="bi bi-plus"></i> Añadir tarea</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Testing -->
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-header bg-info-subtle text-dark">Testing</div>
+      <div
+        class="card-body"
+        style="max-height:60vh; overflow:auto;"
+        cdkDropList
+        #testingList="cdkDropList"
+        [cdkDropListData]="testing"
+        [cdkDropListConnectedTo]="[inProgressList, completedList]"
+        (cdkDropListDropped)="drop($event,'testing')"
+      >
+        <div
+          *ngFor="let task of testing"
+          class="card mb-2 task-card"
+          cdkDrag
+        >
+          <div class="card-body p-2 d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="mb-1">{{ task.desc }}</h6>
+              <small>Días: {{ task.days }} | {{ task.assigned }}</small>
+            </div>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-primary" (click)="openPopup('testing', task)">✎</button>
+              <button class="btn btn-outline-danger" (click)="deleteTask(task.assigned, task.desc)">✕</button>
+            </div>
+          </div>
+        </div>
+        <button
+          class="btn btn-sm btn-outline-secondary w-100 mt-2"
+          (click)="openPopup('testing')"
+        ><i class="bi bi-plus"></i> Añadir tarea</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Completed -->
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-header bg-success-subtle text-dark">Completed</div>
+      <div
+        class="card-body"
+        style="max-height:60vh; overflow:auto;"
+        cdkDropList
+        #completedList="cdkDropList"
+        [cdkDropListData]="completed"
+        [cdkDropListConnectedTo]="[inProgressList, testingList]"
+        (cdkDropListDropped)="drop($event,'completed')"
+      >
+        <div
+          *ngFor="let task of completed"
+          class="card mb-2 task-card"
+          cdkDrag
+        >
+          <div class="card-body p-2 d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="mb-1">{{ task.desc }}</h6>
+              <small>Días: {{ task.days }} | {{ task.assigned }}</small>
+            </div>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-primary" (click)="openPopup('completed', task)">✎</button>
+              <button class="btn btn-outline-danger" (click)="deleteTask(task.assigned, task.desc)">✕</button>
+            </div>
+          </div>
+        </div>
+        <button
+          class="btn btn-sm btn-outline-secondary w-100 mt-2"
+          (click)="openPopup('completed')"
+        ><i class="bi bi-plus"></i> Añadir tarea</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de tarea -->
+<div
+  class="modal fade show"
+  tabindex="-1"
+  [ngStyle]="{ display: showPopup ? 'block' : 'none' }"
+  style="background: rgba(0, 0, 0, 0.5)"
+  *ngIf="showPopup"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ editingTask ? 'Editar tarea' : 'Nueva tarea' }} ({{ popupColumn }})
+        </h5>
+        <button class="btn-close" (click)="showPopup = false"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Descripción</label>
+          <input class="form-control" [(ngModel)]="newTask.desc" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Días estimados</label>
+          <input type="number" class="form-control" [(ngModel)]="newTask.days" min="1" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Responsable</label>
+          <select class="form-select" [(ngModel)]="newTask.assigned">
+            <option disabled selected>Seleccionar</option>
+            <option *ngFor="let m of team.members" [value]="m.name">{{ m.name }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showPopup = false">Cancelar</button>
+        <button class="btn btn-primary" (click)="createTask()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>

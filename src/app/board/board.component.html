@@ -1,0 +1,15 @@
+<section style="margin-top: 2rem">
+    <h3>Board de tareas</h3>
+    <div *ngFor="let task of tasks" style="margin-bottom: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px">
+      <strong>{{ task.desc }}</strong><br />
+      <small>Asignada a: {{ task.assigned }}</small>
+      <br />
+      <label>Estado:</label>
+      <select [(ngModel)]="task.status" (change)="onStatusUpdate(task)">
+        <option value="in progress">En progreso</option>
+        <option value="testing">Testing</option>
+        <option value="completed">Completada</option>
+      </select>
+    </div>
+  </section>
+  
